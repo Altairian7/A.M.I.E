@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "AMIE",
+    "slug": "amie",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "newArchEnabled": true,
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.dasgajraj.amie",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "SYSTEM_ALERT_WINDOW",
+        "VIBRATE",
+        "SET_WALLPAPER",
+        "BIND_ACCESSIBILITY_SERVICE",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED",
+        "READ_CONTACTS",
+        "READ_CALENDAR",
+        "READ_PHONE_STATE",
+        "READ_SMS",
+        "RECEIVE_SMS",
+        "SEND_SMS",
+        "READ_CALL_LOG",
+        "WRITE_CALL_LOG",
+        "CALL_PHONE",
+        "ACCESS_BACKGROUND_LOCATION",
+        "MODIFY_AUDIO_SETTINGS"
+      ],
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MAIN",
+          "category": ["android.intent.category.HOME", "android.intent.category.DEFAULT"]
+        }
+      ],
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FFFFFF"
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a5cd60b6-bd98-4695-a80f-3b078ce0dd35"
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<resources>
+  <string name="app_name">AMIE</string>
+  <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
+  <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="device_admin_description">Your device admin description here</string>
+  <string name="accessibility_service_description">AMIE accessibility service for enhanced user interaction</string>
+</resources>
