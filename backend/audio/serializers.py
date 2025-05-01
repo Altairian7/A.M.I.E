@@ -4,5 +4,16 @@ from .models import AudioMemory
 class AudioMemorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioMemory
-        fields = '__all__'
-        read_only_fields = ['user',]
+        fields = [
+            'id', 'audio_file', 'timestamp', 'transcription', 'score', 
+            'sentiment_label', 'memory_references', 'routine_references',
+            'time_indicators', 'location_indicators', 'severity_indicators',
+            'potential_concerns', 'processing_complete', 'processing_error'
+        ]
+        read_only_fields = [
+            'id', 'timestamp', 'transcription', 'score', 
+            'sentiment_label', 'memory_references', 'routine_references',
+            'time_indicators', 'location_indicators', 'severity_indicators',
+            'potential_concerns', 'processing_complete', 'processing_error',
+            'user'
+        ]

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .model import AudioMemory as audio
+from .models import AudioMemory
 # Register your models here.
 
-admin.site.register(audio)
+admin.site.register(AudioMemory)
