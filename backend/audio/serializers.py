@@ -5,7 +5,7 @@ class AudioMemorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioMemory
         fields = [
-            'id', 'audio_file', 'timestamp', 'transcription', 'score', 
+            'id', 'user', 'audio_file', 'timestamp', 'transcription', 'score', 
             'sentiment_label', 'memory_references', 'routine_references',
             'time_indicators', 'location_indicators', 'severity_indicators',
             'potential_concerns', 'processing_complete', 'processing_error'

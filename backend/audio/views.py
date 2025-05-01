@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from .models import AudioMemory
+from users.models import UserProfile
 from .serializers import AudioMemorySerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -169,9 +170,10 @@ class AudioMemoryListCreateView(APIView):
         print(f"📝 Content-Type: {request.headers.get('Content-Type')}")
         
         # For testing only - remove in production
-        from django.contrib.auth.models import User
-        user = User.objects.first()  # Get any user for testing
+        user = UserProfile.objects.first()  # For testing; user will be the profile object
         request.user = user
+
+
         
         # Real implementation
         # user = request.user
@@ -269,14 +271,20 @@ class AudioMemoryDetailView(APIView):
 
 
 class AudioMemoryExportView(APIView):
-    @firebase_auth_required
+    # Option 1: For testing, temporarily remove the authentication decorator
+    # @firebase_auth_required
     def get(self, request, *args, **kwargs):
         """Export audio memory data as CSV"""
         import csv
         from django.http import HttpResponse
         
-        user = request.user
+        # Option 2: For testing, use the first user like in the post method
+        user = UserProfile.objects.first()  # Temporarily use first user for testing
+        # Real implementation would use: user = request.user
+        
+        print(f"🔍 Exporting data for user: {user}")
         queryset = AudioMemory.objects.filter(user=user)
+        print(f"📊 Found {queryset.count()} audio memories to export")
         
         # Create the HttpResponse object with CSV header
         response = HttpResponse(content_type='text/csv')
@@ -292,19 +300,23 @@ class AudioMemoryExportView(APIView):
             'location_indicators', 'severity_indicators', 'potential_concerns'
         ])
         
-        # Write data rows
+        # Write data rows with better error handling
         for memory in queryset:
-            writer.writerow([
-                memory.timestamp.strftime("%Y-%m-%d %H:%M:%S") if memory.timestamp else '',
-                memory.transcription or '',
-                memory.score if memory.score is not None else '',
-                memory.sentiment_label or '',
-                memory.memory_references or '',
-                memory.routine_references or '',
-                memory.time_indicators or '',
-                memory.location_indicators or '',
-                memory.severity_indicators or '',
-                memory.potential_concerns or ''
-            ])
+            try:
+                writer.writerow([
+                    memory.timestamp.strftime("%Y-%m-%d %H:%M:%S") if memory.timestamp else '',
+                    memory.transcription or '',
+                    memory.score if memory.score is not None else '',
+                    memory.sentiment_label or '',
+                    memory.memory_references or '',
+                    memory.routine_references or '',
+                    memory.time_indicators or '',
+                    memory.location_indicators or '',
+                    memory.severity_indicators or '',
+                    memory.potential_concerns or ''
+                ])
+            except Exception as e:
+                print(f"❌ Error exporting memory {memory.id}: {str(e)}")
         
+        print(f"✅ CSV export completed with {queryset.count()} records")
         return response

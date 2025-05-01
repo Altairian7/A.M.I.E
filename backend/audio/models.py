@@ -1,12 +1,13 @@
 from django.db import models
 from django.conf import settings
+from users.models import UserProfile
 
 def user_audio_path(instance, filename):
     # Generate path like: audio_files/user_id/filename
     return f'audio_files/{instance.user.id}/{filename}'
 
 class AudioMemory(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     audio_file = models.FileField(upload_to=user_audio_path)
     transcription = models.TextField(blank=True, null=True)
     score = models.FloatField(null=True, blank=True)  # Sentiment score
