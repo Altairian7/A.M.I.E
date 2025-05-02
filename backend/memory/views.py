@@ -138,3 +138,83 @@ class ListRegisteredFaces(APIView):
             "registered_faces": registered_faces
         }, status=200)
 
+class DeleteFace(APIView):
+    """API endpoint to delete a registered face"""
+    
+    @firebase_auth_required
+    def delete(self, request, person_name):
+        user = request.user
+        
+        try:
+            # Get the memory object
+            memory = Memory.objects.get(user=user, person_name=person_name)
+            
+            # Delete the image file
+            if memory.image_path:
+                if os.path.exists(memory.image_path.path):
+                    os.remove(memory.image_path.path)
+                    
+                # Try to remove the directory if it's empty
+                dir_path = os.path.dirname(memory.image_path.path)
+                if os.path.exists(dir_path) and not os.listdir(dir_path):
+                    os.rmdir(dir_path)
+            
+            # Delete the memory object
+            memory.delete()
+            
+            return Response({
+                "message": f"Face for {person_name} deleted successfully"
+            }, status=200)
+            
+        except Memory.DoesNotExist:
+            return Response({
+                "message": f"No face registered for {person_name}"
+            }, status=404)
+        except Exception as e:
+            return Response({
+                "message": f"Error deleting face: {str(e)}"
+            }, status=500)
+
+class BulkRegisterFaces(APIView):
+    """API endpoint to register multiple faces at once"""
+    
+    @firebase_auth_required
+    def post(self, request):
+        user = request.user
+        files = request.FILES
+        
+        if not files:
+            return Response({"message": "No images uploaded"}, status=400)
+        
+        results = []
+        
+        for key, image_file in files.items():
+            # Extract person name from filename
+            filename = image_file.name
+            if '.' in filename:
+                person_name = filename.rsplit('.', 1)[0]  # Remove extension
+            else:
+                person_name = filename
+                
+            # Register the face
+            memory = FaceRecognitionSystem.register_face(user, person_name, image_file)
+            
+            if memory:
+                result = {
+                    "person_name": person_name,
+                    "status": "success" if memory.face_encoding else "no_face_detected",
+                    "image_url": memory.image_path.url if memory.image_path else None
+                }
+            else:
+                result = {
+                    "person_name": person_name,
+                    "status": "failed",
+                    "message": "Failed to register face"
+                }
+                
+            results.append(result)
+        
+        return Response({
+            "message": f"Processed {len(results)} images",
+            "results": results
+        }, status=200)
