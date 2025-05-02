@@ -58,3 +58,83 @@ class RegisterFace(APIView):
                 "image_url": memory.image_path.url if memory.image_path else None
             }, status=200)
 
+class IdentifyFaces(APIView):
+    """ API view to identify faces in an image. """
+
+    @firebase_auth_required
+    def post(self, request):
+        usesr = request.user
+        image = request.FILES.get("image")
+
+        if not image:
+            return Respionse({"message": "No image uploaded"}, status=400)
+
+        
+        # Save the image file temporarily
+        temp_filename = f"{uuid.uuid4().hex}.jpg"
+        temp_path = os.path.join(settings.MEDIA_ROOT, "temp", temp_filename)
+
+        # Ensuirng that the temp directory exists
+        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+
+        # Saving the image or file
+        with open(temp_path, "wb") as f:
+            for chunk in image.chunks():
+                f.write(chunk)
+        
+        # Now loading the image using face_recognition
+
+        try:
+            #Identify the faces in the image
+            results = FaceRecognitionSystem.identify_faces(user, temp_path)
+
+            if not results:
+                return Response({"message": "No known faces in the view"}, status=200)
+
+            # Preparing the response data
+            identified_people = []
+            for result in results:
+                identified_people.append({
+                    "person_name": result["person_name"],
+                    "confidence": f"{result['confidence']:.2f}%"
+                })
+                
+            return Response({
+                "message": "Face identification completed",
+                "identified_people": identified_people
+            }, status=200)
+        
+        except Exception as e:
+            return Response({"message": f"Error processing image: {str(e)}"}, status=500)
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+class ListRegisteredFaces(APIView):
+    """API endpoint to list all faces registered by the user"""
+    
+    @firebase_auth_required
+    def get(self, request):
+        user = request.user
+        
+        # Get all memory objects for this user
+        memories = Memory.objects.filter(user=user)
+        
+        if not memories:
+            return Response({"message": "No faces registered yet"}, status=200)
+            
+        # Format the response
+        registered_faces = []
+        for memory in memories:
+            registered_faces.append({
+                "person_name": memory.person_name,
+                "image_url": memory.image_path.url if memory.image_path else None,
+                "created_at": memory.created_at.strftime('%Y-%m-%d %H:%M')
+            })
+            
+        return Response({
+            "message": f"Found {len(registered_faces)} registered faces",
+            "registered_faces": registered_faces
+        }, status=200)
+
