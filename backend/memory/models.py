@@ -19,4 +19,4 @@ class Memory(models.Model):
         unique_together = ('user', 'person_name') # Ensure unique person name per user
     
     def __str__(self):
-        return f"Memory {self.id} - {self.user.username} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"Memory {self.id} - {self.person_name} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"

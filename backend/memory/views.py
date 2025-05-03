@@ -58,58 +58,115 @@ class RegisterFace(APIView):
                 "image_url": memory.image_path.url if memory.image_path else None
             }, status=200)
 
+# class IdentifyFaces(APIView):
+#     """ API view to identify faces in an image. """
+
+#     @firebase_auth_required
+#     def post(self, request):
+#         user = request.user
+#         image = request.FILES.get("image")
+
+#         if not image:
+#             return Respionse({"message": "No image uploaded"}, status=400)
+
+        
+#         # Save the image file temporarily
+#         temp_filename = f"{uuid.uuid4().hex}.jpg"
+#         temp_path = os.path.join(settings.MEDIA_ROOT, "temp", temp_filename)
+
+#         # Ensuirng that the temp directory exists
+#         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+
+#         # Saving the image or file
+#         with open(temp_path, "wb") as f:
+#             for chunk in image.chunks():
+#                 f.write(chunk)
+        
+#         # Now loading the image using face_recognition
+
+#         try:
+#             #Identify the faces in the image
+#             results = FaceRecognitionSystem.identify_faces(user, temp_path)
+
+#             if not results:
+#                 return Response({"message": "No known faces in the view"}, status=200)
+
+#             # Preparing the response data
+#             identified_people = []
+#             for result in results:
+#                 identified_people.append({
+#                     "person_name": result["person_name"],
+#                     "confidence": f"{result['confidence']:.2f}%"
+#                 })
+                
+#             return Response({
+#                 "message": "Face identification completed",
+#                 "identified_people": identified_people
+#             }, status=200)
+        
+#         except Exception as e:
+#             return Response({"message": f"Error processing image: {str(e)}"}, status=500)
+#         finally:
+#             # Clean up the temporary file
+#             if os.path.exists(temp_path):
+#                 os.remove(temp_path)
+
 class IdentifyFaces(APIView):
-    """ API view to identify faces in an image. """
+    """API view to identify faces in an image, optimized for live/mobile use."""
 
     @firebase_auth_required
     def post(self, request):
-        usesr = request.user
+        user = request.user
         image = request.FILES.get("image")
 
         if not image:
-            return Respionse({"message": "No image uploaded"}, status=400)
-
-        
-        # Save the image file temporarily
-        temp_filename = f"{uuid.uuid4().hex}.jpg"
-        temp_path = os.path.join(settings.MEDIA_ROOT, "temp", temp_filename)
-
-        # Ensuirng that the temp directory exists
-        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-
-        # Saving the image or file
-        with open(temp_path, "wb") as f:
-            for chunk in image.chunks():
-                f.write(chunk)
-        
-        # Now loading the image using face_recognition
+            return Response({"message": "No image uploaded"}, status=400)
 
         try:
-            #Identify the faces in the image
-            results = FaceRecognitionSystem.identify_faces(user, temp_path)
+            # Read the uploaded image from memory (no need to save to disk)
+            unknown_img = face_recognition.load_image_file(image)
+            unknown_encodings = face_recognition.face_encodings(unknown_img)
+
+            if not unknown_encodings:
+                return Response({"message": "No face detected"}, status=200)
+
+            # Get stored face encodings for this user
+            memories = Memory.objects.filter(user=user, face_encoding__isnull=False)
+            if not memories.exists():
+                return Response({"message": "No registered faces to compare"}, status=200)
+
+            results = []
+
+            for unknown_encoding in unknown_encodings:
+                best_match = None
+                highest_confidence = 0
+
+                for memory in memories:
+                    known_encoding = pickle.loads(memory.face_encoding)
+                    distance = face_recognition.face_distance([known_encoding], unknown_encoding)[0]
+                    confidence = (1 - distance) * 100
+
+                    if confidence >= 60 and confidence > highest_confidence:
+                        best_match = memory
+                        highest_confidence = confidence
+
+                if best_match:
+                    results.append({
+                        "person_name": best_match.person_name,
+                        "confidence": f"{highest_confidence:.2f}%"
+                    })
 
             if not results:
-                return Response({"message": "No known faces in the view"}, status=200)
+                return Response({"message": "No known faces identified"}, status=200)
 
-            # Preparing the response data
-            identified_people = []
-            for result in results:
-                identified_people.append({
-                    "person_name": result["person_name"],
-                    "confidence": f"{result['confidence']:.2f}%"
-                })
-                
             return Response({
                 "message": "Face identification completed",
-                "identified_people": identified_people
+                "identified_people": results
             }, status=200)
-        
+
         except Exception as e:
             return Response({"message": f"Error processing image: {str(e)}"}, status=500)
-        finally:
-            # Clean up the temporary file
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+
 
 class ListRegisteredFaces(APIView):
     """API endpoint to list all faces registered by the user"""

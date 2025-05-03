@@ -22,4 +22,5 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/audio/', include('audio.urls')),
     path('api/reminders/', include('reminders.urls')),
+    path('api/memory/', include('memory.urls')),
 ]
