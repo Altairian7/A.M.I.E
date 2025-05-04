@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -11,12 +10,15 @@ import {
   Animated,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { getUserProfile } from '../api/apiService';
+import { auth } from '../api/firebaseConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,7 +26,7 @@ const confusionTriggers = [
   'TV or Movies', 'Time Pressure', 'Sudden Changes'
 ];
 
-export default function PatientInfoScreen({ navigation }) {
+export default function PatientInfoScreen({ navigation, route }) {
   const [patientName, setPatientName] = useState('');
   const [nickname, setNickname] = useState('');
   const [age, setAge] = useState('');
@@ -32,12 +34,15 @@ export default function PatientInfoScreen({ navigation }) {
   const [language, setLanguage] = useState('');
   const [selectedTriggers, setSelectedTriggers] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const formAnim = useRef(new Animated.Value(0)).current;
   
   useEffect(() => {
+    // Start animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -56,7 +61,56 @@ export default function PatientInfoScreen({ navigation }) {
         useNativeDriver: true,
       })
     ]).start();
+    
+    // Check authentication status
+    checkAuthAndFetchProfile();
   }, []);
+
+  const checkAuthAndFetchProfile = async () => {
+    try {
+      if (auth.currentUser) {
+        console.log('User is authenticated:', auth.currentUser.uid);
+        fetchUserProfile();
+      } else {
+        console.log('No user is authenticated');
+        setError('You must be logged in to view this screen');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Authentication check failed:', error);
+      setError('Authentication error. Please try logging in again.');
+      setLoading(false);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      // Get UID from route params or from Firebase Auth
+      const uid = route.params?.uid || auth.currentUser?.uid;
+      
+      if (!uid) {
+        throw new Error('No user ID available');
+      }
+      
+      console.log('Fetching profile for user:', uid);
+      const userData = await getUserProfile(uid);
+      
+      // Set the fetched data
+      setPatientName(userData.name || '');
+      // Set nickname as first name
+      setNickname(userData.name?.split(" ")[0] || '');
+      setAge(userData.age?.toString() || '');
+      setGender(userData.gender || '');
+      setLanguage(userData.language || '');
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      setError('Failed to load profile data. Please try again.');
+      setLoading(false);
+    }
+  };
 
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
@@ -68,7 +122,7 @@ export default function PatientInfoScreen({ navigation }) {
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['photo'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -76,6 +130,14 @@ export default function PatientInfoScreen({ navigation }) {
     if (!result.canceled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setProfileImage(result.assets[0].uri);
+    }
+  };
+
+  const toggleTrigger = (trigger) => {
+    if (selectedTriggers.includes(trigger)) {
+      setSelectedTriggers(selectedTriggers.filter(item => item !== trigger));
+    } else {
+      setSelectedTriggers([...selectedTriggers, trigger]);
     }
   };
 
@@ -90,13 +152,63 @@ export default function PatientInfoScreen({ navigation }) {
           gender,
           language,
           triggers: selectedTriggers,
-          profileImage
+          profileImage,
+          uid: auth.currentUser?.uid // Pass the UID to the next screen
         }
       });
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      // Navigate to login screen
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      alert('Failed to sign out. Please try again.');
+    }
+  };
+
   const isFormValid = patientName && age;
+
+  if (loading) {
+    return (
+      <LinearGradient
+        colors={['#4C44B9', '#263077']}
+        style={[styles.container, styles.loadingContainer]}
+      >
+        <ActivityIndicator size="large" color="#FFFFFF" />
+        <Text style={styles.loadingText}>Loading profile data...</Text>
+      </LinearGradient>
+    );
+  }
+
+  if (error) {
+    return (
+      <LinearGradient
+        colors={['#4C44B9', '#263077']}
+        style={[styles.container, styles.errorContainer]}
+      >
+        <Ionicons name="alert-circle-outline" size={60} color="#FFFFFF" />
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={checkAuthAndFetchProfile}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+        {!auth.currentUser && (
+          <TouchableOpacity
+            style={[styles.retryButton, { marginTop: 10, backgroundColor: '#555' }]}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.retryButtonText}>Go to Login</Text>
+          </TouchableOpacity>
+        )}
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -127,6 +239,12 @@ export default function PatientInfoScreen({ navigation }) {
           <Text style={styles.headerTitle}>About the Patient</Text>
           <Text style={styles.headerSubtitle}>Help us create a personalized experience</Text>
         </View>
+        <TouchableOpacity
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+        >
+          <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+        </TouchableOpacity>
       </Animated.View>
 
       <ScrollView
@@ -190,7 +308,14 @@ export default function PatientInfoScreen({ navigation }) {
                   placeholder="Enter full name"
                   placeholderTextColor="#A9A9FC"
                   value={patientName}
-                  onChangeText={setPatientName}
+                  onChangeText={(text) => {
+                    setPatientName(text);
+                    // Auto-update nickname when full name changes
+                    const firstNameFromFullName = text.split(" ")[0];
+                    if (firstNameFromFullName) {
+                      setNickname(firstNameFromFullName);
+                    }
+                  }}
                 />
               </View>
             </View>
@@ -377,10 +502,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 40,
+    position: 'relative',
   },
   backButton: {
     position: 'absolute',
     left: 0,
+    top: 0,
+    padding: 10,
+  },
+  signOutButton: {
+    position: 'absolute',
+    right: 0,
     top: 0,
     padding: 10,
   },
@@ -449,9 +581,10 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 15,
   },
   inputContainer: {
-    width: '48%',
+    width: '100%',
   },
   inputLabel: {
     color: '#A9A9FC',
@@ -540,5 +673,37 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    marginTop: 15,
+    fontSize: 16,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#FFFFFF',
+    marginTop: 15,
+    fontSize: 16,
+    textAlign: 'center',
+    marginHorizontal: 40,
+  },
+  retryButton: {
+    backgroundColor: '#7B6CFF',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 20,
+    marginTop: 20,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -8,7 +8,9 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
       "package": "com.dasgajraj.amie",
       "permissions": [
@@ -41,7 +43,10 @@
       "intentFilters": [
         {
           "action": "android.intent.action.MAIN",
-          "category": ["android.intent.category.HOME", "android.intent.category.DEFAULT"]
+          "category": [
+            "android.intent.category.HOME",
+            "android.intent.category.DEFAULT"
+          ]
         }
       ],
       "splash": {
@@ -61,6 +66,7 @@
       "eas": {
         "projectId": "a5cd60b6-bd98-4695-a80f-3b078ce0dd35"
       }
-    }
+    },
+    "owner": "dasgajraj"
   }
 }

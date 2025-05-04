@@ -189,7 +189,7 @@ const LoginScreen = ({ navigation }) => {
         // User is signed in
         setSuccess(`Logged in as ${user.email}`);
         // Navigate to home screen
-        navigation.navigate('Home');
+        navigation.navigate('HomeScreenWallpaper');
       }
     });
 

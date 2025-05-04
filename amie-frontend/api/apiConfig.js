@@ -1,4 +1,4 @@
-const BASE_URL = "http://192.168.1.7:8000";
+const BASE_URL = "http://192.168.1.9:8000";
 
 const API_ENDPOINTS = {
   // User APIs
