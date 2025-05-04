@@ -10,7 +10,7 @@ class FirebaseAuthMiddleware(BaseMiddleware):
         # Extract the Firebase UID from the Authorization header
         authorization_header = dict(scope.get('headers', [])).get(b'authorization', None)
         if authorization_header:
-            firebase_uid = authorization_header.decode().split(' ').last()
+            firebase_uid = authorization_header.decode().split(' ')[-1]
         
         if firebase_uid:
             print(f"UID extracted: {firebase_uid}")

@@ -2,4 +2,3 @@ venv/
 backend/__pycache__/
 memory/__pycache__/
 backend/audio_files/
-temppp/
