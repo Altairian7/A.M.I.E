@@ -11,6 +11,7 @@ import {
   Dimensions,
   ScrollView,
   Alert,
+  Platform,
 } from 'react-native';
 import { auth, signOut } from '../api/firebaseConfig';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,13 +23,13 @@ export default function HomeScreen({ navigation }) {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [userName, setUserName] = useState('');
-  
+
   useEffect(() => {
     // Set user name
     if (auth.currentUser?.displayName) {
       setUserName(auth.currentUser.displayName.split(' ')[0]);
     }
-    
+
     // Set current time in 12-hour format
     const updateTime = () => {
       const now = new Date();
@@ -39,15 +40,15 @@ export default function HomeScreen({ navigation }) {
       hours = hours ? hours : 12; // the hour '0' should be '12'
       const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
       setCurrentTime(`${hours}:${formattedMinutes} ${ampm}`);
-      
+
       // Set current date in a easily readable format
       const options = { weekday: 'long', month: 'long', day: 'numeric' };
       setCurrentDate(now.toLocaleDateString('en-US', options));
     };
-    
+
     updateTime();
     const timeInterval = setInterval(updateTime, 60000); // Update every minute
-    
+
     return () => clearInterval(timeInterval);
   }, []);
 
@@ -62,331 +63,338 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" />
-      
-      <LinearGradient
-        colors={['#1E3A5F', '#2C5282']}
-        style={styles.background}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      
-      {/* Memory Patterns Background */}
-      <View style={styles.patternContainer}>
-        <View style={[styles.memoryPattern, { top: '10%', left: '5%' }]} />
-        <View style={[styles.memoryPattern, { top: '30%', right: '7%' }]} />
-        <View style={[styles.memoryPattern, { bottom: '25%', left: '15%' }]} />
-        <View style={[styles.memoryPattern, { bottom: '10%', right: '10%' }]} />
-      </View>
-      
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Header with Memory Aid Information */}
-        <View style={styles.header}>
-          <View style={styles.headerTextContainer}>
-            <View style={styles.timeContainer}>
-              <FontAwesome5 name="clock" size={18} color="#A0C4FF" style={styles.clockIcon} />
-              <Text style={styles.timeText}>{currentTime}</Text>
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" translucent />
+      <SafeAreaView style={styles.safeAreaTop} />
+      <SafeAreaView style={styles.container}>
+        <LinearGradient
+          colors={['#1E3A5F', '#2C5282']}
+          style={styles.background}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+
+        {/* Memory Patterns Background */}
+        <View style={styles.patternContainer}>
+          <View style={[styles.memoryPattern, { top: '10%', left: '5%' }]} />
+          <View style={[styles.memoryPattern, { top: '30%', right: '7%' }]} />
+          <View style={[styles.memoryPattern, { bottom: '25%', left: '15%' }]} />
+          <View style={[styles.memoryPattern, { bottom: '10%', right: '10%' }]} />
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Header with Memory Aid Information */}
+          <View style={styles.header}>
+            <View style={styles.headerTextContainer}>
+              <View style={styles.timeContainer}>
+                <FontAwesome5 name="clock" size={18} color="#A0C4FF" style={styles.clockIcon} />
+                <Text style={styles.timeText}>{currentTime}</Text>
+              </View>
+              <Text style={styles.dateText}>{currentDate}</Text>
+              <Text style={styles.welcomeText}>
+                Welcome{userName ? `, ${userName}` : ''}
+              </Text>
             </View>
-            <Text style={styles.dateText}>{currentDate}</Text>
-            <Text style={styles.welcomeText}>
-              Welcome{userName ? `, ${userName}` : ''}
-            </Text>
-          </View>
-          
-          <View style={styles.logoContainer}>
-            <View style={styles.logoBackground}>
-              <Text style={styles.logoText}>A</Text>
+
+            <View style={styles.logoContainer}>
+              <View style={styles.logoBackground}>
+                <Text style={styles.logoText}>A</Text>
+              </View>
             </View>
           </View>
-        </View>
-        
-        {/* App Title with Neuron Design */}
-        <View style={styles.titleContainer}>
-          <View style={styles.neuronLeft} />
-          <Text style={styles.title}>AMIE</Text>
-          <View style={styles.neuronRight} />
-        </View>
-        
-        <Text style={styles.subtitle}>
-          Assistant for Memory, Identity & Emotion
-        </Text>
-        
-        {/* Memory Status Card */}
-        <View style={styles.memoryStatusCard}>
-          <View style={styles.statusIconContainer}>
-            <FontAwesome5 name="brain" size={28} color="#FFF" solid />
+
+          {/* App Title with Neuron Design */}
+          <View style={styles.titleContainer}>
+            <View style={styles.neuronLeft} />
+            <Text style={styles.title}>AMIE</Text>
+            <View style={styles.neuronRight} />
           </View>
-          <View style={styles.statusTextContainer}>
-            <Text style={styles.statusTitle}>Memory Companion Active</Text>
-            <Text style={styles.statusDescription}>
-              Your assistant is helping you remember important details and stay connected with loved ones
-            </Text>
+
+          <Text style={styles.subtitle}>
+            Assistant for Memory, Identity & Emotion
+          </Text>
+
+          {/* Memory Status Card */}
+          <View style={styles.memoryStatusCard}>
+            <View style={styles.statusIconContainer}>
+              <FontAwesome5 name="brain" size={28} color="#FFF" solid />
+            </View>
+            <View style={styles.statusTextContainer}>
+              <Text style={styles.statusTitle}>Memory Companion Active</Text>
+              <Text style={styles.statusDescription}>
+                Your assistant is helping you remember important details and stay connected with loved ones
+              </Text>
+            </View>
           </View>
-        </View>
-        
-        {/* Quick Access Memory Tools */}
-        <View style={styles.quickToolsContainer}>
-          <Text style={styles.sectionTitle}>Memory Tools</Text>
-          <View style={styles.quickTools}>
-            <TouchableOpacity style={styles.quickTool} onPress={() => navigation.navigate('ReminderScreen')}>
-              <View style={styles.quickToolIcon}>
-                <FontAwesome5 name="bell" size={22} color="#FFF" solid />
-              </View>
-              <Text style={styles.quickToolText}>Reminders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.quickTool} onPress={() => navigation.navigate('AudioUploadScreen')}>
-              <View style={styles.quickToolIcon}>
-                <FontAwesome5 name="microphone" size={22} color="#FFF" solid />
-              </View>
-              <Text style={styles.quickToolText}>Voice</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.quickTool} onPress={() => navigation.navigate('ProfileScreen')}>
-              <View style={styles.quickToolIcon}>
-                <FontAwesome5 name="user" size={22} color="#FFF" solid />
-              </View>
-              <Text style={styles.quickToolText}>Profile</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        {/* Memory Support Features */}
-        <Text style={styles.sectionTitle}>Memory Support</Text>
-        <View style={styles.featuresContainer}>
-          {/* Reminders Card */}
-          <TouchableOpacity
-            style={styles.featureCard}
-            onPress={() => navigation.navigate('ReminderScreen')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#4299E1', '#2B6CB0']}
-              style={styles.cardBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
+
+          {/* Quick Access Memory Tools */}
+          <View style={styles.quickToolsContainer}>
+            <Text style={styles.sectionTitle}>Memory Tools</Text>
+            <View style={styles.quickTools}>
+              <TouchableOpacity style={styles.quickTool} onPress={() => navigation.navigate('ReminderScreen')}>
+                <View style={styles.quickToolIcon}>
                   <FontAwesome5 name="bell" size={22} color="#FFF" solid />
                 </View>
-                <Text style={styles.cardTitle}>Daily Reminders</Text>
-              </View>
-              <Text style={styles.cardDescription}>
-                Medication alerts, appointments, and important tasks
-              </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.connectionDots}>
-                  <View style={styles.dot} />
-                  <View style={styles.dotLine} />
-                  <View style={styles.dot} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-          
-          {/* Audio Memories Card */}
-          <TouchableOpacity
-            style={styles.featureCard}
-            onPress={() => navigation.navigate('AudioUploadScreen')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#38B2AC', '#319795']}
-              style={styles.cardBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
+                <Text style={styles.quickToolText}>Reminders</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.quickTool} onPress={() => navigation.navigate('AudioUploadScreen')}>
+                <View style={styles.quickToolIcon}>
                   <FontAwesome5 name="microphone" size={22} color="#FFF" solid />
                 </View>
-                <Text style={styles.cardTitle}>Voice Memories</Text>
-              </View>
-              <Text style={styles.cardDescription}>
-                Record stories and memories for later recall
-              </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.connectionDots}>
-                  <View style={styles.dot} />
-                  <View style={styles.dotLine} />
-                  <View style={styles.dot} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-          
-          {/* Identity Support Card */}
-          <TouchableOpacity
-            style={styles.featureCard}
-            onPress={() => navigation.navigate('ProfileScreen')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#805AD5', '#6B46C1']}
-              style={styles.cardBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
+                <Text style={styles.quickToolText}>Voice</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.quickTool} onPress={() => navigation.navigate('ProfileScreen')}>
+                <View style={styles.quickToolIcon}>
                   <FontAwesome5 name="user" size={22} color="#FFF" solid />
                 </View>
-                <Text style={styles.cardTitle}>Identity Support</Text>
-              </View>
-              <Text style={styles.cardDescription}>
-                Personal information and connection to your history
-              </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.connectionDots}>
-                  <View style={styles.dot} />
-                  <View style={styles.dotLine} />
-                  <View style={styles.dot} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-          
-          {/* Photo Gallery Card */}
-          <TouchableOpacity
-            style={styles.featureCard}
-            onPress={() => navigation.navigate('WallpaperUploadScreen')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#ED64A6', '#D53F8C']}
-              style={styles.cardBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
-                  <FontAwesome5 name="images" size={22} color="#FFF" solid />
-                </View>
-                <Text style={styles.cardTitle}>Memory Gallery</Text>
-              </View>
-              <Text style={styles.cardDescription}>
-                Visual memories and face recognition support
-              </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.connectionDots}>
-                  <View style={styles.dot} />
-                  <View style={styles.dotLine} />
-                  <View style={styles.dot} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Emotional Support & Settings */}
-        <Text style={styles.sectionTitle}>Customization & Settings</Text>
-        <View style={styles.featuresContainer}>
-          {/* Home Display Card */}
-          <TouchableOpacity
-            style={styles.featureCard}
-            onPress={() => navigation.navigate('HomeScreenWallpaper')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#F6AD55', '#ED8936']}
-              style={styles.cardBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
-                  <FontAwesome5 name="home" size={22} color="#FFF" solid />
-                </View>
-                <Text style={styles.cardTitle}>Home Display</Text>
-              </View>
-              <Text style={styles.cardDescription}>
-                Customize display for comfort and recognition
-              </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.connectionDots}>
-                  <View style={styles.dot} />
-                  <View style={styles.dotLine} />
-                  <View style={styles.dot} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-          
-          {/* Permissions Card */}
-          <TouchableOpacity
-            style={styles.featureCard}
-            onPress={() => navigation.navigate('PermissionsDebug')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#718096', '#4A5568']}
-              style={styles.cardBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
-                  <FontAwesome5 name="cog" size={22} color="#FFF" solid />
-                </View>
-                <Text style={styles.cardTitle}>Settings</Text>
-              </View>
-              <Text style={styles.cardDescription}>
-                Permissions, privacy, and caregiver access
-              </Text>
-              <View style={styles.cardFooter}>
-                <View style={styles.connectionDots}>
-                  <View style={styles.dot} />
-                  <View style={styles.dotLine} />
-                  <View style={styles.dot} />
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Daily Memory Tip */}
-        <View style={styles.memoryTipContainer}>
-          <View style={styles.memoryTipHeader}>
-            <FontAwesome5 name="lightbulb" size={18} color="#FFD700" solid />
-            <Text style={styles.memoryTipTitle}>Memory Tip</Text>
+                <Text style={styles.quickToolText}>Profile</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.memoryTipText}>
-            Regular routines help strengthen memory. Try to perform daily
-            activities at the same time each day.
-          </Text>
-        </View>
-        
-        {/* Sign Out Button */}
-        <TouchableOpacity
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-          activeOpacity={0.9}
-        >
-          <FontAwesome5 name="sign-out-alt" size={20} color="#1E3A5F" style={styles.signOutIcon} />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-        
-        {/* Footer with Brain Health Message */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>AMIE v1.0</Text>
-          <View style={styles.footerDivider}>
-            <View style={styles.footerLine} />
-            <FontAwesome5 name="brain" size={14} color="#A0C4FF" style={styles.footerIcon} />
-            <View style={styles.footerLine} />
+
+          {/* Memory Support Features */}
+          <Text style={styles.sectionTitle}>Memory Support</Text>
+          <View style={styles.featuresContainer}>
+            {/* Reminders Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('ReminderScreen')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#4299E1', '#2B6CB0']}
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="bell" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>Daily Reminders</Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                  Medication alerts, appointments, and important tasks
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Audio Memories Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('AudioUploadScreen')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#38B2AC', '#319795']}
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="microphone" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>Voice Memories</Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                  Record stories and memories for later recall
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Face Recognition Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('FaceRecognitionScreen')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#0F2027', '#805AD5', '#2C5364']} // You can keep or customize gradient
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="camera" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>Face Recognition</Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                  Scan and identify faces using advanced recognition technology
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Photo Gallery Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('WallpaperUploadScreen')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#ED64A6', '#D53F8C']}
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="images" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>Memory Gallery</Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                  Visual memories and face recognition support
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.footerSubtext}>Supporting cognitive health</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Emotional Support & Settings */}
+          <Text style={styles.sectionTitle}>Customization & Settings</Text>
+          <View style={styles.featuresContainer}>
+            {/* Home Display Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('HomeScreenWallpaper')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#F6AD55', '#ED8936']}
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="home" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>Home Display</Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                  Customize display for comfort and recognition
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Permissions Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('PermissionsDebug')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#718096', '#4A5568']}
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="cog" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>Settings</Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                  Permissions, privacy, and caregiver access
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Daily Memory Tip */}
+          <View style={styles.memoryTipContainer}>
+            <View style={styles.memoryTipHeader}>
+              <FontAwesome5 name="lightbulb" size={18} color="#FFD700" solid />
+              <Text style={styles.memoryTipTitle}>Memory Tip</Text>
+            </View>
+            <Text style={styles.memoryTipText}>
+              Regular routines help strengthen memory. Try to perform daily
+              activities at the same time each day.
+            </Text>
+          </View>
+
+          {/* Sign Out Button */}
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+            activeOpacity={0.9}
+          >
+            <FontAwesome5 name="sign-out-alt" size={20} color="#1E3A5F" style={styles.signOutIcon} />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+
+          {/* Footer with Brain Health Message */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>AMIE v1.0</Text>
+            <View style={styles.footerDivider}>
+              <View style={styles.footerLine} />
+              <FontAwesome5 name="brain" size={14} color="#A0C4FF" style={styles.footerIcon} />
+              <View style={styles.footerLine} />
+            </View>
+            <Text style={styles.footerSubtext}>Supporting cognitive health</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  safeAreaTop: {
+    flex: 0,
+    backgroundColor: '#1E3A5F',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: '#1E3A5F',
@@ -414,7 +422,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 18,
-    paddingTop: 10,
+    paddingTop: 20, // Increased padding at the top
     paddingBottom: 25,
   },
   header: {
