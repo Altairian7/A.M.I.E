@@ -32,6 +32,8 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
+    'users.apps.UsersConfig',
+
     'daphne',
 
     'django.contrib.admin',
@@ -45,7 +47,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
 
-    'users.apps.UsersConfig',
     'django_extensions',
     'audio',
     'reminders',

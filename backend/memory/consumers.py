@@ -4,13 +4,14 @@ import pickle
 import face_recognition
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from .models import Memory
 from PIL import Image
 import io
 import numpy as np
 
 class FaceRecognitionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        from .models import Memory
+
         self.user = self.scope["user"]
         if not self.user.is_authenticated:
             await self.close()
