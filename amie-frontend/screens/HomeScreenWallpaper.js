@@ -30,32 +30,50 @@ const HomeScreenWallpaper = ({ navigation }) => {
   const [currentDate, setCurrentDate] = useState('');
   const [imageLoadStatus, setImageLoadStatus] = useState('loading');
   const [usingFallbackImage, setUsingFallbackImage] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
   
   // Animated values for swipe gesture
   const swipeY = new Animated.Value(0);
-  const swipeOpacity = swipeY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0],
+  
+  // Interpolate for translating all content upward
+  // We'll use a slower, more natural mapping (0.5x multiplier)
+  const translateY = swipeY.interpolate({
+    inputRange: [0, 300],  // Increased input range for more gradual movement
+    outputRange: [0, -height], // Still move up to full height of screen
+    extrapolate: 'clamp'
+  });
+
+  // Additional fade out effect as content moves up
+  const fadeOut = swipeY.interpolate({
+    inputRange: [0, 100, 200],
+    outputRange: [1, 0.9, 0], // More gradual fade
     extrapolate: 'clamp'
   });
 
   // Configure pan responder for swipe detection
   const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponder: () => !isUnlocking, // Disable when already unlocking
     onPanResponderMove: (evt, gestureState) => {
-      if (gestureState.dy < 0) {
-        // Only allow upward swipe
-        swipeY.setValue(Math.abs(gestureState.dy));
+      if (gestureState.dy < 0 && !isUnlocking) {
+        // Only allow upward swipe - use a 0.8 multiplier for more natural feel
+        // This makes the screen follow your finger more accurately
+        swipeY.setValue(Math.min(300, Math.abs(gestureState.dy) * 0.8));
       }
     },
     onPanResponderRelease: (evt, gestureState) => {
-      if (gestureState.dy < -100) {
-        // If swiped up more than 100 pixels, navigate to Home
+      // If already in unlocking state, don't process further gestures
+      if (isUnlocking) return;
+      
+      if (gestureState.dy < -80) { // Threshold for completing the unlock
+        // If swiped up enough, complete the animation without returning
+        setIsUnlocking(true); // Set flag to prevent further interactions
+        
         Animated.timing(swipeY, {
-          toValue: height,
+          toValue: 300, // Move all the way through animation range
           duration: 300,
           useNativeDriver: true
         }).start(() => {
+          // Don't reset animation value, keep content off screen
           navigation.navigate('Home');
         });
       } else {
@@ -74,6 +92,8 @@ const HomeScreenWallpaper = ({ navigation }) => {
       setLoading(true);
       setError(null);
       setImageLoadStatus('loading');
+      setIsUnlocking(false); // Reset unlocking state when fetching new wallpaper
+      swipeY.setValue(0); // Reset animation position
       
       // Get current user directly from Firebase auth
       const user = auth.currentUser;
@@ -163,7 +183,7 @@ const HomeScreenWallpaper = ({ navigation }) => {
     
     // Refresh wallpaper when screen comes into focus
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchRandomWallpaper();
+      fetchRandomWallpaper(); // This now resets animation and unlocking state
     });
 
     return () => {
@@ -217,77 +237,104 @@ const HomeScreenWallpaper = ({ navigation }) => {
   }
 
   return (
-    <Animated.View 
-      style={[styles.container, { opacity: swipeOpacity }]}
-      {...panResponder.panHandlers}
-    >
+    <View style={styles.container} {...panResponder.panHandlers}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       
-      {/* Use a fallback color while image loads */}
-      <View style={styles.wallpaperBackground}>
-        {usingFallbackImage ? (
-          // Use local fallback image
-          <Image 
-            source={FALLBACK_FAMILY_PHOTO}
-            style={styles.wallpaperImage}
-            resizeMode="cover"
-            onLoad={handleImageLoadSuccess}
-            onError={handleImageLoadError}
-          />
-        ) : (
-          // Use image from API
-          <Image 
-            source={{ uri: wallpaper.image }}
-            style={styles.wallpaperImage}
-            resizeMode="cover"
-            onLoad={handleImageLoadSuccess}
-            onError={handleImageLoadError}
-          />
-        )}
-        
-        {imageLoadStatus === 'loading' && (
-          <View style={styles.imageLoadingOverlay}>
-            <ActivityIndicator size="large" color="#FFFFFF" />
-          </View>
-        )}
-      </View>
+      {/* Fixed background color to ensure no white flashes during animation */}
+      <View style={styles.fixedBackground} />
       
-      <View style={styles.overlay}>
-        <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{currentTime}</Text>
-          <Text style={styles.dateText}>{currentDate}</Text>
-        </View>
-        
-        <View style={styles.lockIndicator}>
-          <IconButton
-            icon="chevron-up"
-            size={24}
-            iconColor="#FFFFFF"
-            style={styles.swipeIcon}
-          />
-          <Text style={styles.swipeText}>Swipe up to unlock</Text>
-        </View>
-      </View>
-
-      {/* Debug info - only show in development */}
-      {__DEV__ && wallpaper && (
-        <View style={styles.debugInfo}>
-          <Text style={styles.debugText}>
-            {usingFallbackImage ? 'Family' : `Using image from API: ${wallpaper.image.substring(0, 50)}...`}
-          </Text>
-          <Text style={styles.debugText}>Status: {imageLoadStatus}</Text>
-          {wallpaper.description && (
-            <Text style={styles.debugText}>Description: {wallpaper.description}</Text>
+      {/* Animated wrapper that contains EVERYTHING - wallpaper and content */}
+      <Animated.View 
+        style={[
+          styles.animatedContainer,
+          { 
+            transform: [{ translateY }],
+            opacity: fadeOut
+          }
+        ]}
+      >
+        {/* Wallpaper now inside the animated container so it moves too */}
+        <View style={styles.wallpaperBackground}>
+          {usingFallbackImage ? (
+            // Use local fallback image
+            <Image 
+              source={FALLBACK_FAMILY_PHOTO}
+              style={styles.wallpaperImage}
+              resizeMode="cover"
+              onLoad={handleImageLoadSuccess}
+              onError={handleImageLoadError}
+            />
+          ) : (
+            // Use image from API
+            <Image 
+              source={{ uri: wallpaper.image }}
+              style={styles.wallpaperImage}
+              resizeMode="cover"
+              onLoad={handleImageLoadSuccess}
+              onError={handleImageLoadError}
+            />
+          )}
+          
+          {imageLoadStatus === 'loading' && (
+            <View style={styles.imageLoadingOverlay}>
+              <ActivityIndicator size="large" color="#FFFFFF" />
+            </View>
           )}
         </View>
-      )}
-    </Animated.View>
+        
+        {/* Overlay content */}
+        <View style={styles.overlay}>
+          <View style={styles.timeContainer}>
+            <Text style={styles.timeText}>{currentTime}</Text>
+            <Text style={styles.dateText}>{currentDate}</Text>
+          </View>
+          
+          <View style={styles.lockIndicator}>
+            <IconButton
+              icon="chevron-up"
+              size={24}
+              iconColor="#FFFFFF"
+              style={styles.swipeIcon}
+            />
+            <Text style={styles.swipeText}>Swipe up to unlock</Text>
+          </View>
+        </View>
+
+        {/* Debug info - only show in development */}
+        {__DEV__ && wallpaper && (
+          <View style={styles.debugInfo}>
+            <Text style={styles.debugText}>
+              {usingFallbackImage ? 'Family' : `Using image from API: ${wallpaper.image.substring(0, 50)}...`}
+            </Text>
+            <Text style={styles.debugText}>Status: {imageLoadStatus}</Text>
+            {wallpaper.description && (
+              <Text style={styles.debugText}>Description: {wallpaper.description}</Text>
+            )}
+          </View>
+        )}
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  fixedBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000', // Black background below everything
+    zIndex: -10,
+  },
+  animatedContainer: {
+    flex: 1,
+    position: 'absolute',
+    width: width,
+    height: height,
   },
   loadingContainer: {
     flex: 1,
@@ -319,22 +366,20 @@ const styles = StyleSheet.create({
   },
   wallpaperImage: {
     width: '100%',
-    height: '100%',
+    height: '110%',
   },
   imageLoadingOverlay: {
     position: 'absolute',
     width: '100%',
-    height: '100%',
+    height: '110%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     justifyContent: 'space-between',
     paddingTop: 100,
-    paddingBottom: 50,
   },
   timeContainer: {
     alignItems: 'center',
@@ -373,7 +418,7 @@ const styles = StyleSheet.create({
   },
   debugInfo: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 90,
     left: 10,
     right: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
