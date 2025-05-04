@@ -5,25 +5,24 @@ from firebase_admin import auth
 
 class FirebaseAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        query_string = scope.get('query_string', b'').decode()
-        uid = None
+        firebase_uid = None
         
-        # Extract UID from query string (like ?uid=XYZ)
-        for param in query_string.split('&'):
-            if param.startswith('uid='):
-                uid = param.split('=')[1]
-                break
+        # Extract the Firebase UID from the Authorization header
+        authorization_header = dict(scope.get('headers', [])).get(b'authorization', None)
+        if authorization_header:
+            firebase_uid = authorization_header.decode().split(' ').last()
         
-        if uid:
-            scope['user'] = await self.get_user_from_uid(uid)
+        if firebase_uid:
+            print(f"UID extracted: {firebase_uid}")
+            scope['user'] = await self.get_user_from_uid(firebase_uid)
         else:
+            print("No UID found in Authorization header")
             scope['user'] = AnonymousUser()
-        
+
         return await super().__call__(scope, receive, send)
 
     @database_sync_to_async
     def get_user_from_uid(self, uid):
-        # 👇 Lazy import to prevent "AppRegistryNotReady" error
         from users.models import UserProfile
 
         try:
