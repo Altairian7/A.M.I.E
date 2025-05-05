@@ -38,3 +38,4 @@ eas.json
 /eas.json
 
 api/firebaseConfig.js
+screens/memoryApi.js

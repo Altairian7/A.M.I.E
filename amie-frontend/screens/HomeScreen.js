@@ -253,6 +253,37 @@ export default function HomeScreen({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
+            {/*  MemoryQAScreen Card */}
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('MemoryQAScreen')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#ED64A6', '#D53F8C']}
+                style={styles.cardBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 name="images" size={22} color="#FFF" solid />
+                  </View>
+                  <Text style={styles.cardTitle}>CSV Narration </Text>
+                </View>
+                <Text style={styles.cardDescription}>
+                 Ask Question from past memmories
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.connectionDots}>
+                    <View style={styles.dot} />
+                    <View style={styles.dotLine} />
+                    <View style={styles.dot} />
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+            
             {/* Photo Gallery Card */}
             <TouchableOpacity
               style={styles.featureCard}
