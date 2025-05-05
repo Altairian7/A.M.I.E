@@ -27,20 +27,27 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = ['http://192.168.0.101', 'http://localhost:3000']  
 # Application definition
 
 INSTALLED_APPS = [
+    'users.apps.UsersConfig',
+
+    'daphne',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'channels',
     'rest_framework',
     'corsheaders',
-    'users.apps.UsersConfig',
+
     'django_extensions',
     'audio',
     'reminders',
@@ -74,6 +81,7 @@ TEMPLATES = [
         },
     },
 ]
+ASGI_APPLICATION = 'backend.asgi.application'
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
@@ -90,6 +98,16 @@ REST_FRAMEWORK = {
 #     ),
 # }
 
+# Configure the channel layers
+CHANNEL_LAYERS = {
+    'default': {
+        # For production, consider using Redis:
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
