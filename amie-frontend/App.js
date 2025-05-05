@@ -23,6 +23,7 @@ import LoadingScreen from './screens/LoadingScreen';
 import WallpaperUploadScreen from './screens/WallpaperUploadScreen';
 import HomeScreenWallpaper from './screens/HomeScreenWallpaper';
 import MemoryQAScreen from './screens/MemoryQAScreen';
+import RandomEventScreen from './screens/RandomEventScreen';
 
 const Stack = createStackNavigator();
 
@@ -86,6 +87,7 @@ export default function App() {
           <Stack.Screen name="WallpaperUploadScreen" component={WallpaperUploadScreen} />
           <Stack.Screen name="HomeScreenWallpaper" component={HomeScreenWallpaper} />
           <Stack.Screen name="MemoryQAScreen" component={MemoryQAScreen} />
+          <Stack.Screen name="RandomEventScreen" component={RandomEventScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
