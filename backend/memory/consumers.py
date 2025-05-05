@@ -3,6 +3,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.apps import apps
 from asgiref.sync import sync_to_async
+import pickle
+import face_recognition
 
 class FaceRecognitionConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
@@ -53,3 +55,27 @@ class FaceRecognitionConsumer(AsyncWebsocketConsumer):
             'type': 'connection_established',
             'message': f'Connected as {self.user.name}'
         }))
+
+
+
+    async def handle_image_data(self, image_bytes):
+            """Process image data for face recognition."""
+            try:
+                # Get all memories with face encodings for this user
+                memories = await self.get_memories_with_faces(self.user)
+                
+                # Process face recognition
+                result, status_code = await self.process_face_recognition(image_bytes, memories)
+                
+                # Send the result back to the client
+                await self.send(text_data=json.dumps({
+                    'type': 'face_recognition_result',
+                    'status': status_code,
+                    'data': result
+                }))
+                
+            except Exception as e:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'Error processing image: {str(e)}'
+                }))
